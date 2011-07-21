@@ -1,0 +1,282 @@
+
+ASPIRE_DIR=/Users/alandix/Documents/Talis/data/aspire/
+META_DIR=/Users/alandix/Documents/Talis/data/aspire/20110401040135/metabox
+P_DIR=/Users/alandix/Documents/Talis/data/aspire/processed
+
+$ wc meta
+ 8756763 41926503 1293767737 meta
+
+$ cut -f1 -d' ' <$META_DIR/meta >$P_DIR/subjects.txt
+
+$ cut -f2 -d' ' <$META_DIR/meta >$P_DIR/predicates.txt
+
+$ time sort -u <$P_DIR/subjects.txt >$P_DIR/subjects-unique.txt
+real	6m43.846s
+user	6m3.143s
+sys	0m3.897s
+
+$ time sort -u <$P_DIR/predicates.txt >$P_DIR/predicates-unique.txt
+real	10m24.239s
+user	9m9.643s
+sys	0m3.976s
+
+$ cat $P_DIR/subjects-unique.txt $P_DIR/predicates-unique.txt | time sort -u >$P_DIR/all-unique.txt
+       38.87 real        34.16 user         0.68 sys
+
+
+$ wc $P_DIR/*unique.txt
+	  913495  913495 54595794 all-unique.txt
+	     103     103    4675 predicates-unique.txt
+	  913392  913392 54591119 subjects-unique.txt
+
+$ php extract-objects.php
+	@7232 triple 8750000
+
+$ php extract-objects-2.php
+	@300 triple 8700000
+
+
+$ time sort -u <$P_DIR/uri-subjects.txt >$P_DIR/uri-subjects-unique.txt
+	real	6m36.588s
+	user	6m24.095s
+	sys	0m2.833s
+
+$ time sort -u <$P_DIR/uri-predicates.txt >$P_DIR/uri-predicates-unique.txt
+	real	9m44.689s
+	user	9m16.897s
+	sys	0m2.977s
+
+$ time sort -u <$P_DIR/uri-objects.txt >$P_DIR/uri-objects-unique.txt
+	real	4m43.923s
+	user	4m30.063s
+	sys	0m2.279s
+
+$ cat $P_DIR/uri-subjects-unique.txt $P_DIR/uri-objects-unique.txt | time sort -u >$P_DIR/uri-entities-unique.txt
+	real	2m3.507s
+	user	1m56.495s
+	sys	0m2.784s
+
+$ cat $P_DIR/uri-predicates-unique.txt  $P_DIR/uri-entities-unique.txt | time sort -u >$P_DIR/uri-all-unique.txt
+	real	1m16.744s
+	user	1m11.466s
+	sys	0m2.130s
+
+$ time sort -u <$P_DIR/literal-objects.txt >$P_DIR/literal-all-unique.txt
+	real	2m40.452s
+	user	2m38.395s
+	sys	0m0.946s
+
+
+$ wc *-unique.txt
+	  913495  913495 54595794 all-unique.txt
+	 1613494 4781780 54327088 literal-all-unique.txt
+	     103     103    4675 predicates-unique.txt
+	  913392  913392 54591119 subjects-unique.txt
+	 1764437 1764437 107840501 uri-all-unique.txt
+	 1764334 1764334 107836032 uri-entities-unique.txt
+	 1749964 1749964 107018875 uri-objects-unique.txt
+	     103     103    4469 uri-predicates-unique.txt
+	  913392  913392 52764335 uri-subjects-unique.txt
+	 9632714 12801000 538982888 total
+
+$ wc *.txt
+	  913495  913495 54595794 all-unique.txt
+	 1613494 4781780 54327088 literal-all-unique.txt
+	 4688134 11587585 118285519 literal-objects.txt
+	     103     103    4675 predicates-unique.txt
+	 8756763 8756763 394959787 predicates.txt
+	  913392  913392 54591119 subjects-unique.txt
+	 8756763 8756763 533959222 subjects.txt
+	 1764437 1764437 107840501 uri-all-unique.txt
+	 1764334 1764334 107836032 uri-entities-unique.txt
+	 1749964 1749964 107018875 uri-objects-unique.txt
+	 4068629 4068629 220912416 uri-objects.txt
+	     103     103    4469 uri-predicates-unique.txt
+	 8756763 8756763 377446261 uri-predicates.txt
+	  913392  913392 52764335 uri-subjects-unique.txt
+	 8756763 8756763 516445696 uri-subjects.txt
+	 53416529 63484266 2700991789 total
+	
+	
+	
+$ php --php-ini php.ini create-ids.php
+	hashing uris took 16
+	last id was 1764437 
+	reading literals took 1
+	hashing literals took 15
+	last id was 21613494 
+
+$ time sort $P_DIR/uri-ids.txt >$P_DIR/uri-ids-sorted.txt  # numeric order not sort order
+	real	0m42.352s
+	user	0m39.745s
+	sys	0m0.753s
+
+$ time php --php-ini php.ini triples-to-ids.php
+	real	11m1.939s
+	user	8m12.579s
+	sys	2m30.633s
+
+$ for i in spo sop ops pso
+   do
+     echo "===" $i
+     time sort -u <$P_DIR/$i.txt >$P_DIR/$i-sorted.txt
+   done
+
+	=== spo
+
+	real	3m4.369s
+	user	2m59.542s
+	sys	0m1.571s
+	=== sop
+
+	real	3m5.133s
+	user	3m0.630s
+	sys	0m1.482s
+	=== ops
+
+	real	5m6.066s
+	user	4m59.924s
+	sys	0m1.694s
+	=== pso
+
+	real	5m8.694s
+	user	5m1.285s
+	sys	0m1.844s
+	
+
+$ cut -f1,2 $P_DIR/spo-sorted.txt | time sort -u > $P_DIR/sp-sorted.txt
+	      151.30 real       138.58 user         1.11 sys
+$ cut -f1,2 $P_DIR/ops-sorted.txt | time sort -u > $P_DIR/op-sorted.txt
+	      149.64 real       138.87 user         0.84 sys
+
+
+$ time lam $P_DIR/sp-sorted.txt -s$'\011'+  >$P_DIR/sp-dir.txt
+	real	0m3.633s
+	user	0m2.197s
+	sys	0m0.433s
+
+$ time lam $P_DIR/op-sorted.txt -s$'\011'-  >$P_DIR/op-dir.txt
+	real	0m2.723s
+	user	0m1.664s
+	sys	0m0.327s
+	
+
+$ time sort -u  $P_DIR/sp-dir.txt $P_DIR/op-dir.txt > $P_DIR/ep-dir.txt
+	real	3m11.255s
+	user	3m5.877s
+	sys	0m1.623s
+	
+$ time php --php-ini php.ini pred-counts.php
+	real	2m31.622s
+	user	1m49.896s
+	sys	0m39.775s
+
+$ time php --php-ini php.ini pred-ids.php
+	real	0m12.874s
+	user	0m12.112s
+	sys	0m0.179s
+
+$ time php --php-ini php.ini pred-pred-counts.php
+	predicate-predicate counts took 297
+
+	real	4m56.702s
+	user	4m55.323s
+	sys	0m0.596s
+
+$ time php --php-ini php.ini calc-stats.php  # version to create cluster file
+	real	0m2.024s
+	user	0m1.880s
+	sys	0m0.137s
+
+$ time php --php-ini php.ini classify-on-pairs.php
+	real	1m28.230s
+	user	1m22.194s
+	sys	0m5.140s
+
+$ time sort -u  $P_DIR/types-code.txt $P_DIR/ec-code.txt > $P_DIR/ect-code.txt
+real	0m37.770s
+user	0m36.713s
+sys	0m0.343s
+	
+$ time php --php-ini php.ini class-type-counts.php
+	real	0m23.539s
+	user	0m23.291s
+	sys	0m0.093s
+	
+	
+$ time php --php-ini php.ini calc-relations.php
+
+
+========================================
+====== 1764407	http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+
+$ time fgrep $'\011'1764407$'\011' <$P_DIR/spo-sorted.txt | cut -f1,3 >$P_DIR/types.txt 
+	real	0m1.440s
+	user	0m1.465s
+	sys	0m0.154s
+	
+$ cut -f2 <$P_DIR/types.txt | time sort -u | time join -t $'\011' -1 1 -2 1 - $P_DIR/uri-ids-sorted.txt >$P_DIR/type-ids.txt
+	24.47 real        23.24 user         0.08 sys
+    29.40 real         4.76 user         0.08 sys
+    
+$ time lam $P_DIR/types.txt -s$'\011't  >$P_DIR/types-code.txt
+	real	0m0.715s
+	user	0m0.443s
+	sys	0m0.089s
+
+===== Timing tests
+
+$ head -10000 $P_DIR/pso.txt | time sort >sort1.out
+        0.22 real         0.17 user         0.00 sys
+$ head -100000 $P_DIR/pso.txt | time sort >sort1.out
+        2.17 real         2.11 user         0.01 sys
+$ head -200000 $P_DIR/pso.txt | time sort >sort1.out
+        4.60 real         4.53 user         0.03 sys
+$ head -500000 $P_DIR/pso.txt | time sort >sort1.out
+       12.38 real        12.16 user         0.08 sys
+$ head -1000000 $P_DIR/pso.txt | time sort >sort1.out
+       27.52 real        26.70 user         0.24 sys
+
+===== investigate singular literal class
+
+$ time fgrep $'\011'1522651$'\011' <$P_DIR/spo-sorted.txt
+	1607290	1522651	20001141
+	...
+	679054	1522651	20001141
+
+	real	0m0.377s
+	user	0m0.153s
+	sys	0m0.097s
+
+
+$ fgrep $'\011'616298$'\011' <$P_DIR/spo-sorted.txt
+	1000004	616298	20001141
+	1000006	616298	20001141
+	...
+
+$ time fgrep 20001141$'\011' <$P_DIR/literal-ids.txt
+	20001141	""
+
+	real	0m0.911s
+	user	0m0.041s
+	sys	0m0.090s
+
+== hand copy the singular class to $P_DIR/empty-predicates-with-ids.txt
+	30000311	1522651	o	http://talisaspire.com/schema#articleCount
+	30000311	725728	o	http://schemas.talis.com/2005/address/schema#localityName
+	... 
+
+$ cut -f2 <$P_DIR/empty-predicates-with-ids.txt >empty-predicate-ids.txt
+$ cut -f4 <$P_DIR/empty-predicates-with-ids.txt >empty-predicates.txt  # for human reading
+$ time ( for p in `cat $P_DIR/empty-predicate-ids.txt`
+         do
+            fgrep $'\011'$p$'\011' <$P_DIR/spo-sorted.txt
+         done ) > empty-predicate-triples.txt
+	real	0m15.932s
+	user	0m9.675s
+	sys	0m5.584s
+
+
+$ time fgrep http://talisaspire.com/schema#articleCount $META_DIR/meta
+
+
